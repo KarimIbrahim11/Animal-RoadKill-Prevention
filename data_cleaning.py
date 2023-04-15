@@ -4,7 +4,7 @@ import os
 from matplotlib import pyplot as plt
 
 # Data dir
-data_dir = 'data'
+data_dir = 'D:/Coding Projects/Pycharm Projects/Datasets/animals'
 
 # Reading Labels from text file
 labels_pth = 'name of the animals.txt'
