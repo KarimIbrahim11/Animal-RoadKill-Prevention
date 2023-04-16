@@ -3,7 +3,8 @@ import numpy as np
 import cv2
 import imghdr
 import os
-from matplotlib import pyplot as plt
+from helpers import *
+
 
 if __name__ == '__main__':
     # Limiting the use of VRAM in GPU
@@ -12,28 +13,34 @@ if __name__ == '__main__':
     for gpu in gpus:
         tf.config.experimental.set_memory_growth(gpu,True)
 
+    # Path
     data_dir = 'D:/Coding Projects/Pycharm Projects/Datasets/animals'
-
-    # Reading Labels from text file
     labels_pth = 'name of the animals.txt'
-    labels_file = open(labels_pth, "r")
-    labels = labels_file.read().splitlines()
-    labels_file.close()
-    print(labels)
+
+    # Loading Labels
+    labels = load_labels(labels_pth)
+
 
     # Building Data Pipeline from DS
-    data = tf.keras.preprocessing.image_dataset_from_directory(data_dir) # Data pipeline
-    data_iterator = data.as_numpy_iterator() # Loading data generator as numpy iterator to access the data
-    batch = data_iterator.next()    # load one batch of data
+    data = tf.keras.preprocessing.image_dataset_from_directory(data_dir)
+
+    # Display Images from batches to check for correct label assignment
+    batch_images_plot(data, labels, scaled_yet=False)
+
+    # Scaling Data
+    data = data.map(lambda x,y: (x/255, y)) # only transforming batch[0] (x)
+    print("Scaling Success?", data.as_numpy_iterator().next()[0].max()==1.0)
+
+    # Data split
+    train_size = int(len(data)*50/84)
+    val_size = int(len(data)*17/84)
+    test_size = int(len(data)*17/84)
+
+    train = data.take(train_size)
+    val = data.skip(train_size).take(val_size)
+    test = data.skip(train_size+val_size).take(test_size)
+    print("Validating Data Split Success?", len(data) == len(train)+len(test)+len(val))
 
 
-    # Checking correct labels assigned to each image in Data Pipeline in two different batches
-    for i in range(0,2):
-        fig,ax = plt.subplots(ncols=4, figsize=(20,20))
-        for idx, img in enumerate(batch[0][:4]):
-            ax[idx].imshow(img.astype(int))
-            ax[idx].title.set_text(labels[batch[1][idx]])
-        plt.show()
-        batch = data_iterator.next()  # load another batch of data
 
 
