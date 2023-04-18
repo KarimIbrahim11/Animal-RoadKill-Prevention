@@ -10,154 +10,206 @@ from tensorflow.keras.layers import Dense, Flatten, Dropout
 from tensorflow.keras.applications import VGG16
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.optimizers import Adam, RMSprop
+from tensorflow.keras.callbacks import ModelCheckpoint
 from sklearn.utils.class_weight import compute_class_weight
 
 
+def train_pipeline():
+    # Model instantiation
+    model = VGG16(include_top=True, weights='imagenet')
 
-# Specifying Directories
-train_dir = 'D:/Coding Projects/Pycharm Projects/Datasets/animals/train'
-test_dir = 'D:/Coding Projects/Pycharm Projects/Datasets/animals/test'
+    # Input pipeline
+    input_shape = model.layers[0].output_shape[0][1:3]
 
-# Model instantiation
-model = VGG16(include_top=True, weights='imagenet')
+    # Creating Generators
+    datagen_train = ImageDataGenerator(
+        rescale=1./255,
+        # rotation_range=180,
+        # width_shift_range=0.1,
+        # height_shift_range=0.1,
+        # shear_range=0.1,
+        shear_range=0.2,
+        zoom_range=0.2,
+        horizontal_flip=True,
+        # zoom_range=[0.9,1.5],
+        # horizontal_flip=True,
+        # vertical_flip=True,
+        fill_mode='nearest')
 
-# Input pipeline
-input_shape = model.layers[0].output_shape[0][1:3]
+    datagen_test = ImageDataGenerator(rescale=1./255)
 
-# Creating Generators
-datagen_train = ImageDataGenerator(
-    rescale=1./255,
-    rotation_range=180,
-    width_shift_range=0.1,
-    height_shift_range=0.1,
-    shear_range=0.1,
-    zoom_range=[0.9,1.5],
-    horizontal_flip=True,
-    vertical_flip=True,
-    fill_mode='nearest')
+    # Specifying batch size
+    batch_size = 32
 
-datagen_test = ImageDataGenerator(rescale=1./255)
+    # Save augmented images to check our parameters
+    save_augmented_to_dir = False
+    if save_augmented_to_dir:
+        save_to_dir = 'augmented_images/'
+    else:
+        save_to_dir = None
 
-# Specifying batch size
-batch_size = 16
+    # Calling generators from directory
+    generator_train = datagen_train.flow_from_directory(directory=train_dir,
+                                                        target_size=input_shape,
+                                                        batch_size=batch_size,
+                                                        shuffle=True,
+                                                        save_to_dir=save_to_dir)
 
-# Save augmented images to check our parameters
-if True:
-    save_to_dir = 'augmented_images/'
-else:
-    save_to_dir = None
+    generator_test = datagen_test.flow_from_directory(directory=test_dir,
+                                                      target_size=input_shape,
+                                                      batch_size=batch_size,
+                                                      shuffle=False)
 
-# Calling generators from directory
-generator_train = datagen_train.flow_from_directory(directory=train_dir,
-                                                    target_size=input_shape,
-                                                    batch_size=batch_size,
-                                                    shuffle=True,
-                                                    save_to_dir=save_to_dir)
+    # Steps test specifies the number of steps to run before quitting (disable endless checking)
+    nb_train_samples = generator_train.n
+    nb_validation_samples = generator_test.n
+    steps_per_epoch = nb_train_samples // batch_size
+    steps_test  = nb_validation_samples // batch_size
 
-generator_test = datagen_test.flow_from_directory(directory=test_dir,
-                                                  target_size=input_shape,
-                                                  batch_size=batch_size,
-                                                  shuffle=False)
+    # Get the file-paths for all the images in the training- and test-sets
+    image_paths_train = path_join(train_dir, generator_train.filenames)
+    image_paths_test = path_join(test_dir, generator_test.filenames)
 
-# Steps test specifies the number of steps to run before quitting (disable endless checking)
-steps_test = generator_test.n / batch_size
+    # Get the class-numbers for all the images in the training- and test-sets.
+    cls_train = generator_train.classes
+    cls_test = generator_test.classes
 
-# Get the file-paths for all the images in the training- and test-sets
-image_paths_train = path_join(train_dir, generator_train.filenames)
-image_paths_test = path_join(test_dir, generator_test.filenames)
+    # Getting class names
+    class_names = list(generator_train.class_indices.keys())
 
-# Get the class-numbers for all the images in the training- and test-sets.
-cls_train = generator_train.classes
-cls_test = generator_test.classes
+    # Get the number of classes for the dataset.
+    num_classes = generator_train.num_classes
 
-# Getting class names
-class_names = list(generator_train.class_indices.keys())
+    # Load the first images from the train-set.
+    images = load_images(image_paths=image_paths_train[0:9])
 
-# Get the number of classes for the dataset.
-num_classes = generator_train.num_classes
-
-# Load the first images from the train-set.
-images = load_images(image_paths=image_paths_train[0:9])
-
-# Get the true classes for those images.
-cls_true = cls_train[0:9]
-
-
-# Plot the images and labels using our helper-function above.
-# plot_images(images=images, cls_true=cls_true, cls_names=class_names, smooth=True)
-
-# Adding Class weights to compensate for the data imbalance
-class_weight = compute_class_weight(class_weight='balanced',
-                                    classes=np.unique(cls_train),
-                                    y=cls_train)
-class_weight = {i:w for i,w in enumerate(class_weight)}
-
-print("Class Weights:", class_weight)
-
-# print(input_shape)
-# predict(model, image_path='fox1.jpg')
-# model.summary()
+    # Get the true classes for those images.
+    cls_true = cls_train[0:9]
 
 
-# Getting the last conv block
-transfer_layer = model.get_layer('block5_pool')
-print("Transfer Layer Output:", transfer_layer.output)
+    # Plot the images and labels using our helper-function above.
+    # plot_images(images=images, cls_true=cls_true, cls_names=class_names, smooth=True)
 
-# Dropping the classification layers on the old model
-conv_model = Model(inputs=model.input, outputs=transfer_layer.output)
-# conv_model.summary()
+    # Adding Class weights to compensate for the data imbalance
+    class_weight = compute_class_weight(class_weight='balanced',
+                                        classes=np.unique(cls_train),
+                                        y=cls_train)
+    class_weight = {i:w for i,w in enumerate(class_weight)}
 
-# Sequential API adding a new model
-new_model = Sequential()
-new_model.add(conv_model)
-new_model.add(Flatten())
-new_model.add(Dense(1024, activation='relu'))
-new_model.add(Dropout(0.5))
-new_model.add(Dense(num_classes, activation='softmax'))
-optimizer = Adam(lr=1e-5)
-loss = 'categorical_crossentropy'
-metrics = ['categorical_accuracy']
+    print("Class Weights:", class_weight)
 
-# Showing trainable layers
-# print_layer_trainable(conv_model)
-
-# Freezing weights in early layers
-conv_model.trainable = False
-for layer in conv_model.layers:
-    layer.trainable = False
-# print("NEW MODEL: ")
-# print_layer_trainable(conv_model)
-
-# Compiling Model
-new_model.compile(optimizer=optimizer, loss=loss, metrics=metrics)
-
-# Saving model architecture to json
-json_config = new_model.to_json()
-saved_model = model_from_json(json_config)
+    # print(input_shape)
+    # predict(model, image_path='fox1.jpg')
+    # model.summary()
 
 
-# Defining epochs
-epochs = 20
-steps_per_epoch = 100
+    # Getting the last conv block
+    transfer_layer = model.get_layer('block5_pool')
+    print("Transfer Layer Output:", transfer_layer.output)
 
-# Training
-if class_weight is not None and len(class_weight) > 0:
-    print("YES")
-    history = new_model.fit(x=generator_train,
-                                      epochs=epochs,
-                                      steps_per_epoch=steps_per_epoch,
-                                      class_weight=class_weight,
-                                      validation_data=generator_test,
-                                      validation_steps=steps_test)
-else:
-    print("NO")
-    history = new_model.fit_generator(generator=generator_train,
-                                      epochs=epochs,
-                                      steps_per_epoch=steps_per_epoch,
-                                      validation_data=generator_test,
-                                      validation_steps=steps_test)
+    # Dropping the classification layers on the old model
+    conv_model = Model(inputs=model.input, outputs=transfer_layer.output)
+    # conv_model.summary()
+
+    # Sequential API adding a new model
+    new_model = Sequential()
+    new_model.add(conv_model)
+    new_model.add(Flatten())
+    new_model.add(Dense(1024, activation='relu'))
+    new_model.add(Dropout(0.5))
+    new_model.add(Dense(num_classes, activation='softmax'))
+    optimizer = Adam(lr=1e-5)
+    loss = 'categorical_crossentropy'
+    metrics = ['categorical_accuracy']
+
+    # Showing trainable layers
+    # print_layer_trainable(conv_model)
+
+    # Freezing weights in early layers
+    conv_model.trainable = False
+    for layer in conv_model.layers:
+        layer.trainable = False
+    # print("NEW MODEL: ")
+    # print_layer_trainable(conv_model)
 
 
-# Saving model + weights
-new_model.save('saved_models/vgg16ft.h5', save_format='h5', overwrite=False)
-new_model.save_weights('saved_models/weightsonly/vgg16ft.h5')
+    # Model Load Weights
+    new_model.load_weights('saved_models/weightsonly/vgg16ft_1.h5')
+
+
+    # Compiling Model
+    new_model.compile(optimizer=optimizer, loss=loss, metrics=metrics)
+
+    # Saving model architecture to json
+    # json_config = new_model.to_json()
+    # saved_model = model_from_json(json_config)
+
+
+    # Saving Training Progress
+
+    filepath = "saved_models/weightsonly/cp-{epoch:04d}-{val_categorical_accuracy:.2f}.hdf5"
+    checkpoint = ModelCheckpoint(filepath=filepath, verbose=1, save_best_only=True, monitor='val_categorical_accuracy')
+    callbacks_list = [checkpoint]
+
+
+    # Defining epochs
+    epochs = 70
+
+
+    # Training
+    if class_weight is not None and len(class_weight) > 0:
+        print("YES")
+        history = new_model.fit(x=generator_train,
+                                epochs=epochs,
+                                steps_per_epoch=steps_per_epoch,
+                                class_weight=class_weight,
+                                validation_data=generator_test,
+                                validation_steps=steps_test,
+                                callbacks=callbacks_list )
+    else:
+        print("NO")
+        history = new_model.fit(x=generator_train,
+                                epochs=epochs,
+                                steps_per_epoch=steps_per_epoch,
+                                validation_data=generator_test,
+                                validation_steps=steps_test,
+                                callbacks=callbacks_list )
+
+    # Saving model + weights
+    new_model.save('saved_models/vgg16ft_1.h5', save_format='h5', overwrite=False)
+    new_model.save_weights('saved_models/weightsonly/vgg16ft_1.h5', overwrite=False)
+
+    # Summarize history for accuracy
+    # plt.plot(history.history['accuracy'])
+    plt.plot(history.history['val_accuracy'])
+    plt.title('model accuracy')
+    plt.ylabel('accuracy')
+    plt.xlabel('epoch')
+    plt.legend(['train', 'test'], loc='upper left')
+    plt.show()
+
+
+    # summarize history for loss
+    # plt.plot(history.history['loss'])
+    plt.plot(history.history['val_loss'])
+    plt.title('model loss')
+    plt.ylabel('loss')
+    plt.xlabel('epoch')
+    plt.legend(['train', 'test'], loc='upper left')
+    plt.show()
+
+
+if __name__ == '__main__':
+    # Specifying Directories
+    train_dir = 'D:/Coding Projects/Pycharm Projects/Datasets/animals/train'
+    test_dir = 'D:/Coding Projects/Pycharm Projects/Datasets/animals/test'
+
+    # Limit VRAM Usage
+    gpus = tf.config.experimental.list_physical_devices('GPU')
+    print(gpus)
+    for gpu in gpus:
+        tf.config.experimental.set_memory_growth(gpu, True)
+
+    # USE GPU
+    with tf.device('/device:GPU:0'):
+        train_pipeline()
