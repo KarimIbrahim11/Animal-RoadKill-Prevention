@@ -1,12 +1,10 @@
 # import matplotlib.pyplot as plt
 # import PIL
 # from PIL import Image
-# import tensorflow as tf
+import tensorflow as tf
 # import numpy as np
 # import os
 from helpers import *
-
-
 from tensorflow.keras.models import Model, Sequential, model_from_json, save_model, load_model
 from tensorflow.keras.layers import Dense, Flatten, Dropout
 from tensorflow.keras.applications import VGG16
@@ -84,6 +82,7 @@ images = load_images(image_paths=image_paths_train[0:9])
 # Get the true classes for those images.
 cls_true = cls_train[0:9]
 
+
 # Plot the images and labels using our helper-function above.
 # plot_images(images=images, cls_true=cls_true, cls_names=class_names, smooth=True)
 
@@ -91,8 +90,9 @@ cls_true = cls_train[0:9]
 class_weight = compute_class_weight(class_weight='balanced',
                                     classes=np.unique(cls_train),
                                     y=cls_train)
+class_weight = {i:w for i,w in enumerate(class_weight)}
 
-
+print("Class Weights:", class_weight)
 
 # print(input_shape)
 # predict(model, image_path='fox1.jpg')
@@ -101,10 +101,11 @@ class_weight = compute_class_weight(class_weight='balanced',
 
 # Getting the last conv block
 transfer_layer = model.get_layer('block5_pool')
-print(transfer_layer.output)
+print("Transfer Layer Output:", transfer_layer.output)
 
 # Dropping the classification layers on the old model
 conv_model = Model(inputs=model.input, outputs=transfer_layer.output)
+# conv_model.summary()
 
 # Sequential API adding a new model
 new_model = Sequential()
@@ -112,7 +113,7 @@ new_model.add(conv_model)
 new_model.add(Flatten())
 new_model.add(Dense(1024, activation='relu'))
 new_model.add(Dropout(0.5))
-new_model.add(Dense(num_classes,activation='softmax'))
+new_model.add(Dense(num_classes, activation='softmax'))
 optimizer = Adam(lr=1e-5)
 loss = 'categorical_crossentropy'
 metrics = ['categorical_accuracy']
@@ -140,12 +141,22 @@ epochs = 20
 steps_per_epoch = 100
 
 # Training
-history = new_model.fit(x=generator_train,
-                        epochs=epochs,
-                        steps_per_epoch=steps_per_epoch,
-                        class_weight=class_weight,
-                        validation_data=generator_test,
-                        validation_steps=steps_test)
+if class_weight is not None and len(class_weight) > 0:
+    print("YES")
+    history = new_model.fit(x=generator_train,
+                                      epochs=epochs,
+                                      steps_per_epoch=steps_per_epoch,
+                                      class_weight=class_weight,
+                                      validation_data=generator_test,
+                                      validation_steps=steps_test)
+else:
+    print("NO")
+    history = new_model.fit_generator(generator=generator_train,
+                                      epochs=epochs,
+                                      steps_per_epoch=steps_per_epoch,
+                                      validation_data=generator_test,
+                                      validation_steps=steps_test)
+
 
 # Saving model + weights
 new_model.save('saved_models/vgg16ft.h5', save_format='h5', overwrite=False)
