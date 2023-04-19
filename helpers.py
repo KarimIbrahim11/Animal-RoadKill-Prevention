@@ -69,6 +69,12 @@ def plot_prediction(img, pred, labels):
     plt.title("Predicted Value: " + pred_value)
     plt.show()
 
+# Show predicted labels
+def show_labels(pred, labels):
+    index = np.argmax(pred)
+    pred_label = labels[index]
+    return pred_label
+
 # Helper-function for joining a directory and list of filenames.
 def path_join(dirname, filenames):
     return [os.path.join(dirname, filename) for filename in filenames]
