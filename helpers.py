@@ -134,3 +134,98 @@ def predict(model, image_path):
 def print_layer_trainable(model):
     for layer in model.layers:
         print("{0}:\t{1}".format(layer.trainable, layer.name))
+
+
+# Plotting the training history (loss and vall
+def plot_training_history(history):
+    # Get the classification accuracy and loss-value
+    # for the training-set.
+    acc = history.history['categorical_accuracy']
+    loss = history.history['loss']
+
+    # Get it for the validation-set (we only use the test-set).
+    val_acc = history.history['val_categorical_accuracy']
+    val_loss = history.history['val_loss']
+
+    # Plot the accuracy and loss-values for the training-set.
+    plt.plot(acc, linestyle='-', color='b', label='Training Acc.')
+    plt.plot(loss, 'o', color='b', label='Training Loss')
+
+    # Plot it for the test-set.
+    plt.plot(val_acc, linestyle='--', color='r', label='Test Acc.')
+    plt.plot(val_loss, 'o', color='r', label='Test Loss')
+
+    # Plot title and legend.
+    plt.title('Training and Test Accuracy')
+    plt.legend()
+
+    # Ensure the plot shows correctly.
+    plt.show()
+
+
+
+def print_confusion_matrix(cls_pred, cls_test, class_names):
+    # cls_pred is an array of the predicted class-number for
+    # all images in the test-set.
+
+    # Get the confusion matrix using sklearn.
+    cm = confusion_matrix(y_true=cls_test,  # True class for test-set.
+                          y_pred=cls_pred)  # Predicted class.
+
+    print("Confusion matrix:")
+
+    # Print the confusion matrix as text.
+    print(cm)
+
+    # Print the class-names for easy reference.
+    for i, class_name in enumerate(class_names):
+        print("({0}) {1}".format(i, class_name))
+
+def plot_example_errors(cls_pred, cls_test, image_paths_test):
+    # cls_pred is an array of the predicted class-number for
+    # all images in the test-set.
+
+    # Boolean array whether the predicted class is incorrect.
+    incorrect = (cls_pred != cls_test)
+
+    # Get the file-paths for images that were incorrectly classified.
+    image_paths = np.array(image_paths_test)[incorrect]
+
+    # Load the first 9 images.
+    images = load_images(image_paths=image_paths[0:9])
+
+    # Get the predicted classes for those images.
+    cls_pred = cls_pred[incorrect]
+
+    # Get the true classes for those images.
+    cls_true = cls_test[incorrect]
+
+    # Plot the 9 images we have loaded and their corresponding classes.
+    # We have only loaded 9 images so there is no need to slice those again.
+    plot_images(images=images,
+                cls_true=cls_true[0:9],
+                cls_pred=cls_pred[0:9])
+
+def example_errors(model, test_image_generator, test_steps_per_epoch, cls_test, image_paths_test, class_names):
+    # The Keras data-generator for the test-set must be reset
+    # before processing. This is because the generator will loop
+    # infinitely and keep an internal index into the dataset.
+    # So it might start in the middle of the test-set if we do
+    # not reset it first. This makes it impossible to match the
+    # predicted classes with the input images.
+    # If we reset the generator, then it always starts at the
+    # beginning so we know exactly which input-images were used.
+    test_image_generator.reset()
+
+    # Predict the classes for all images in the test-set.
+    y_pred = model.predict(test_image_generator, steps=test_steps_per_epoch)
+
+    # Convert the predicted classes from arrays to integers.
+    cls_pred = np.argmax(y_pred, axis=1)
+
+    # Plot examples of mis-classified images.
+    plot_example_errors(cls_pred, cls_test, image_paths_test)
+
+    # Print the confusion matrix.
+    print_confusion_matrix(cls_pred, cls_test, class_names)
+

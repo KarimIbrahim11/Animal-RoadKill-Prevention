@@ -180,23 +180,14 @@ def train_pipeline():
     new_model.save_weights('saved_models/weightsonly/vgg16ft_1.h5', overwrite=False)
 
     # Summarize history for accuracy
-    # plt.plot(history.history['accuracy'])
-    plt.plot(history.history['val_accuracy'])
-    plt.title('model accuracy')
-    plt.ylabel('accuracy')
-    plt.xlabel('epoch')
-    plt.legend(['train', 'test'], loc='upper left')
-    plt.show()
+    plot_training_history(history)
 
+    # Evaluating model on test set
+    result = new_model.evaluate(generator_test, steps=steps_test)
+    print("Test-set classification accuracy: {0:.2%}".format(result[1]))
 
-    # summarize history for loss
-    # plt.plot(history.history['loss'])
-    plt.plot(history.history['val_loss'])
-    plt.title('model loss')
-    plt.ylabel('loss')
-    plt.xlabel('epoch')
-    plt.legend(['train', 'test'], loc='upper left')
-    plt.show()
+    # Example Errors
+    example_errors(new_model, generator_test, steps_test, cls_test, image_paths_test, class_names)
 
 
 if __name__ == '__main__':
