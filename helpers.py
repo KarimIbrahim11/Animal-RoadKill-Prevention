@@ -1,4 +1,3 @@
-import tensorflow as tf
 import numpy as np
 import os
 from matplotlib import pyplot as plt
@@ -6,6 +5,8 @@ import PIL
 from PIL import Image
 from tensorflow.keras.applications.vgg16 import preprocess_input, decode_predictions
 from sklearn.metrics import confusion_matrix
+from tensorflow.keras.preprocessing import image
+import cv2
 
 
 
@@ -46,6 +47,27 @@ def load_images(image_paths):
 
     # Convert to a numpy array and return it.
     return np.asarray(images)
+
+# Load img for inference or plotting
+def load_image(pth):
+    return cv2.cvtColor(cv2.imread(pth), cv2.COLOR_BGR2RGB)
+
+def preprocess_image(img):
+    dim= (224, 224)
+    img = cv2.resize(img, dim)
+    img = image.img_to_array(img)
+    img = np.expand_dims(img, axis=0)
+    img /= 255.
+    return img
+
+# Plot Predicted Class against input img
+def plot_prediction(img, pred, labels):
+    index = np.argmax(pred)
+    pred_value = labels[index]
+    plt.imshow(img.reshape((224, 224, 3)))
+    plt.axis('off')
+    plt.title("Predicted Value: " + pred_value)
+    plt.show()
 
 # Helper-function for joining a directory and list of filenames.
 def path_join(dirname, filenames):

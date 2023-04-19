@@ -1,19 +1,26 @@
-from tensorflow.keras.models import Model, Sequential
+# import matplotlib.pyplot as plt
+# import PIL
+# from PIL import Image
+import tensorflow as tf
+# import numpy as np
+# import os
+from helpers import *
+from tensorflow.keras.models import Model, Sequential, model_from_json, save_model, load_model
 from tensorflow.keras.layers import Dense, Flatten, Dropout
 from tensorflow.keras.applications import VGG16
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
-from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.optimizers import Adam, RMSprop
 from tensorflow.keras.callbacks import ModelCheckpoint
 from sklearn.utils.class_weight import compute_class_weight
-from helpers import *
 
 
-def train_pipeline():
+def fine_tune_pipeline():
     # Model instantiation
     model = VGG16(include_top=True, weights='imagenet')
 
     # Input pipeline
     input_shape = model.layers[0].output_shape[0][1:3]
+    print(input_shape)
 
     # Creating Generators
     datagen_train = ImageDataGenerator(
@@ -33,7 +40,7 @@ def train_pipeline():
     datagen_test = ImageDataGenerator(rescale=1./255)
 
     # Specifying batch size
-    batch_size = 32
+    batch_size = 16
 
     # Save augmented images to check our parameters
     save_augmented_to_dir = False
@@ -80,7 +87,6 @@ def train_pipeline():
     # Get the true classes for those images.
     cls_true = cls_train[0:9]
 
-
     # Plot the images and labels using our helper-function above.
     # plot_images(images=images, cls_true=cls_true, cls_names=class_names, smooth=True)
 
@@ -119,17 +125,20 @@ def train_pipeline():
     # Showing trainable layers
     # print_layer_trainable(conv_model)
 
-    # Freezing weights in early layers
-    conv_model.trainable = False
-    for layer in conv_model.layers:
-        layer.trainable = False
-    # print("NEW MODEL: ")
-    # print_layer_trainable(conv_model)
 
+
+
+    # Freezing weights in early layers
+    conv_model.trainable = True
+    for layer in conv_model.layers:
+        # Boolean whether this layer is trainable.
+        trainable = ('block5' in layer.name or 'block4' in layer.name)
+
+        # Set the layer's bool.
+        layer.trainable = trainable
 
     # Model Load Weights
-    new_model.load_weights('saved_models/weightsonly/vgg16ft_1.h5')
-
+    new_model.load_weights('saved_models/weightsonly/vgg16ft_1_finetune.h5')
 
     # Compiling Model
     new_model.compile(optimizer=optimizer, loss=loss, metrics=metrics)
@@ -141,13 +150,13 @@ def train_pipeline():
 
     # Saving Training Progress
 
-    filepath = "saved_models/weightsonly/cp-{epoch:04d}-{val_categorical_accuracy:.2f}.hdf5"
+    filepath = "saved_models/weightsonly/finetune-weights-in-hdf5/cp-{epoch:04d}-{val_categorical_accuracy:.2f}.hdf5"
     checkpoint = ModelCheckpoint(filepath=filepath, verbose=1, save_best_only=True, monitor='val_categorical_accuracy')
     callbacks_list = [checkpoint]
 
 
     # Defining epochs
-    epochs = 70
+    epochs = 30
 
 
     # Training
@@ -170,8 +179,8 @@ def train_pipeline():
                                 callbacks=callbacks_list )
 
     # Saving model + weights
-    new_model.save('saved_models/vgg16ft_1.h5', save_format='h5', overwrite=False)
-    new_model.save_weights('saved_models/weightsonly/vgg16ft_1.h5', overwrite=False)
+    new_model.save('saved_models/vgg16ft_1_finetune.h5', save_format='h5', overwrite=False)
+    new_model.save_weights('saved_models/weightsonly/vgg16ft_1_finetune.h5', overwrite=False)
 
     # Summarize history for accuracy
     plot_training_history(history)
@@ -197,4 +206,4 @@ if __name__ == '__main__':
 
     # USE GPU
     with tf.device('/device:GPU:0'):
-        train_pipeline()
+        fine_tune_pipeline()
