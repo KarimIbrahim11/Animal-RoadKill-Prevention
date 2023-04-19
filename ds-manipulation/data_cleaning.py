@@ -1,7 +1,6 @@
 import cv2
 import imghdr
 import os
-from matplotlib import pyplot as plt
 
 # Data dir
 data_dir = 'D:/Coding Projects/Pycharm Projects/Datasets/animals'
