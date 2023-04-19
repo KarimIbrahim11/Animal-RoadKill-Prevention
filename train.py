@@ -1,3 +1,4 @@
+import tensorflow as tf
 from tensorflow.keras.models import Model, Sequential
 from tensorflow.keras.layers import Dense, Flatten, Dropout
 from tensorflow.keras.applications import VGG16
@@ -8,7 +9,7 @@ from sklearn.utils.class_weight import compute_class_weight
 from helpers import *
 
 
-def train_pipeline():
+def transfer_learn_pipeline():
     # Model instantiation
     model = VGG16(include_top=True, weights='imagenet')
 
@@ -91,11 +92,6 @@ def train_pipeline():
     class_weight = {i:w for i,w in enumerate(class_weight)}
 
     print("Class Weights:", class_weight)
-
-    # print(input_shape)
-    # predict(model, image_path='fox1.jpg')
-    # model.summary()
-
 
     # Getting the last conv block
     transfer_layer = model.get_layer('block5_pool')
@@ -197,4 +193,4 @@ if __name__ == '__main__':
 
     # USE GPU
     with tf.device('/device:GPU:0'):
-        train_pipeline()
+        transfer_learn_pipeline()

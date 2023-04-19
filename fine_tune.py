@@ -1,9 +1,4 @@
-# import matplotlib.pyplot as plt
-# import PIL
-# from PIL import Image
 import tensorflow as tf
-# import numpy as np
-# import os
 from helpers import *
 from tensorflow.keras.models import Model, Sequential, model_from_json, save_model, load_model
 from tensorflow.keras.layers import Dense, Flatten, Dropout
@@ -44,6 +39,7 @@ def fine_tune_pipeline():
 
     # Save augmented images to check our parameters
     save_augmented_to_dir = False
+
     if save_augmented_to_dir:
         save_to_dir = 'augmented_images/'
     else:
@@ -97,10 +93,6 @@ def fine_tune_pipeline():
     class_weight = {i:w for i,w in enumerate(class_weight)}
 
     print("Class Weights:", class_weight)
-
-    # print(input_shape)
-    # predict(model, image_path='fox1.jpg')
-    # model.summary()
 
 
     # Getting the last conv block
