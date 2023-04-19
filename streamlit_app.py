@@ -14,7 +14,7 @@ def getModel():
 
 @st.cache_data
 def getLabels():
-    loaded_labels = load_labels('D:/Coding Projects/Pycharm Projects/Datasets/animals/meta/labels.txt')
+    loaded_labels = load_labels('labels.txt')
     loaded_labels.sort()
     print("************** Labels Loaded **************")
     return loaded_labels
