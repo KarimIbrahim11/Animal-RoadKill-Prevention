@@ -9,14 +9,14 @@ if __name__ == '__main__':
     labels.sort()
 
     # Whole model
-    model = load_model('saved_models/vgg16ft_1_finetune.h5')
+    model = load_model('saved_models/vgg16ft_2_finetune.h5')
     # # Arch only
     # model = model_from_json('json_string')
     # # Weights only
     # model.load_weights('my_model_weights.h5')
 
     # Load input data
-    img = load_image('test_images/3.jpg')
+    img = load_image('test_images/17.jpg')
 
     # Pre process data
     img = preprocess_image(img)

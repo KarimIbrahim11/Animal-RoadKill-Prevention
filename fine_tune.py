@@ -20,10 +20,11 @@ def fine_tune_pipeline():
     # Creating Generators
     datagen_train = ImageDataGenerator(
         rescale=1./255,
-        # rotation_range=180,
-        # width_shift_range=0.1,
-        # height_shift_range=0.1,
+        rotation_range=30,
+        width_shift_range=0.1,
+        height_shift_range=0.1,
         # shear_range=0.1,
+        brightness_range=[0.2, 0.8],
         shear_range=0.2,
         zoom_range=0.2,
         horizontal_flip=True,
@@ -35,7 +36,7 @@ def fine_tune_pipeline():
     datagen_test = ImageDataGenerator(rescale=1./255)
 
     # Specifying batch size
-    batch_size = 16
+    batch_size = 32
 
     # Save augmented images to check our parameters
     save_augmented_to_dir = False
@@ -77,11 +78,11 @@ def fine_tune_pipeline():
     # Get the number of classes for the dataset.
     num_classes = generator_train.num_classes
 
-    # Load the first images from the train-set.
-    images = load_images(image_paths=image_paths_train[0:9])
-
-    # Get the true classes for those images.
-    cls_true = cls_train[0:9]
+    # # Load the first images from the train-set.
+    # images = load_images(image_paths=image_paths_train[0:9])
+    #
+    # # Get the true classes for those images.
+    # cls_true = cls_train[0:9]
 
     # Plot the images and labels using our helper-function above.
     # plot_images(images=images, cls_true=cls_true, cls_names=class_names, smooth=True)
@@ -130,7 +131,7 @@ def fine_tune_pipeline():
         layer.trainable = trainable
 
     # Model Load Weights
-    new_model.load_weights('saved_models/weightsonly/vgg16ft_1_finetune.h5')
+    new_model.load_weights('saved_models/weightsonly/vgg16ft_2_finetune.h5')
 
     # Compiling Model
     new_model.compile(optimizer=optimizer, loss=loss, metrics=metrics)
@@ -171,8 +172,8 @@ def fine_tune_pipeline():
                                 callbacks=callbacks_list )
 
     # Saving model + weights
-    new_model.save('saved_models/vgg16ft_1_finetune.h5', save_format='h5', overwrite=False)
-    new_model.save_weights('saved_models/weightsonly/vgg16ft_1_finetune.h5', overwrite=False)
+    new_model.save('saved_models/vgg16ft_3_finetune.h5', save_format='h5', overwrite=False)
+    new_model.save_weights('saved_models/weightsonly/vgg16ft_3_finetune.h5', overwrite=False)
 
     # Summarize history for accuracy
     plot_training_history(history)
