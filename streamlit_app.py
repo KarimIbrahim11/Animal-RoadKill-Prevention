@@ -27,7 +27,7 @@ if __name__ == '__main__':
     labels = getLabels()
 
     st.title("Animal-RoadKill-Prevention Task")
-    st.caption("An animal classifier for Elevate AI by Karim Ibrahim")
+    st.caption("A 47 class animal classifier for Elevate AI by Karim Ibrahim")
 
     st.subheader("Image Uploader:")
     uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
