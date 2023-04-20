@@ -1,3 +1,4 @@
 # Auto detect text files and perform LF normalization
 * text=auto
 saved_models/vgg16ft_1_finetune.h5 filter=lfs diff=lfs merge=lfs -text
+saved_models/vgg16ft_2_finetune.h5 filter=lfs diff=lfs merge=lfs -text
