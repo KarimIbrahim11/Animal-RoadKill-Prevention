@@ -8,7 +8,7 @@ from helpers import load_labels, load_image, preprocess_image, show_labels
 @st.cache_resource
 def getModel():
     # This function will only be run the first time it's called
-    loaded_model = load_model('saved_models/vgg16ft_1_finetune.h5')
+    loaded_model = load_model('saved_models/vgg16ft_2_finetune.h5')
     print("************** Model Loaded **************")
     return loaded_model
 
