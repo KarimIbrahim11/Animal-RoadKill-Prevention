@@ -1,6 +1,7 @@
 # Animal-RoadKill-Prevention
 This is an image classification project that aims to classify animal images into their names using deep learning techniques.
-### Streamlit Demo Link: https://karimibrahim11-animal-roadkill-prevention-streamlit-app-7t2zxz.streamlit.app/
+
+### Updated: EfficientNet Streamlit Demo Link: https://karimibrahim11-animal-roadkill-prevention-streamlit-app-7t2zxz.streamlit.app/
 
 ## Dataset
 The dataset used in this project is the: https://www.kaggle.com/datasets/iamsouravbanerjee/animal-image-dataset-90-different-animals?resource=downloadThe dataset. It's an unbalanced dataset that has 90 animal classes with an average of 65 image per class.  Since the task is to classify animals on the road, I removed Classes of Sea animals, most birds and almost all reptiles. I also removed very small images from each class, files less thank 9KB were deleted. That resulted in 47 class found in the: labels.txt file. The dataset has been split into training, and testing sets only as it was very small. The training set contains 80% of the images, the set set contains the rest 20% of the images.
