@@ -2,6 +2,7 @@ from keras.models import load_model
 from helpers import load_labels, load_image, preprocess_image, plot_prediction
 
 
+
 if __name__ == '__main__':
 
     # Loading Labels

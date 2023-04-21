@@ -1,4 +1,6 @@
 import tensorflow as tf
+from tensorflow.python.keras.callbacks import EarlyStopping
+
 from helpers import *
 from tensorflow.keras.models import Model, Sequential, model_from_json, save_model, load_model
 from tensorflow.keras.layers import Dense, Flatten, Dropout
@@ -19,18 +21,22 @@ def fine_tune_pipeline():
 
     # Creating Generators
     datagen_train = ImageDataGenerator(
-        rescale=1./255,
-        rotation_range=30,
-        width_shift_range=0.1,
-        height_shift_range=0.1,
-        # shear_range=0.1,
-        brightness_range=[0.2, 0.8],
+        rescale=1. / 255,
         shear_range=0.2,
         zoom_range=0.2,
         horizontal_flip=True,
-        # zoom_range=[0.9,1.5],
+        # rescale=1./255,
+        # rotation_range=30,
+        # # width_shift_range=0.1,
+        # # height_shift_range=0.1,
+        # # shear_range=0.1,
+        # brightness_range=[0.2, 0.5],
+        # shear_range=0.1,
+        # zoom_range=0.2,
         # horizontal_flip=True,
-        # vertical_flip=True,
+        # # zoom_range=[0.9,1.5],
+        # # horizontal_flip=True,
+        # # vertical_flip=True,
         fill_mode='nearest')
 
     datagen_test = ImageDataGenerator(rescale=1./255)
@@ -111,7 +117,7 @@ def fine_tune_pipeline():
     new_model.add(Dense(1024, activation='relu'))
     new_model.add(Dropout(0.5))
     new_model.add(Dense(num_classes, activation='softmax'))
-    optimizer = Adam(lr=1e-5)
+    optimizer = Adam(lr=0.000049)
     loss = 'categorical_crossentropy'
     metrics = ['categorical_accuracy']
 
@@ -126,12 +132,17 @@ def fine_tune_pipeline():
     for layer in conv_model.layers:
         # Boolean whether this layer is trainable.
         trainable = ('block5' in layer.name or 'block4' in layer.name)
-
+        # trainable = True
         # Set the layer's bool.
         layer.trainable = trainable
 
+    # # Experimenting
+    # for layer in conv_model.layers[:-4]:
+    #     layer.trainable = False
+
+
     # Model Load Weights
-    new_model.load_weights('saved_models/weightsonly/vgg16ft_2_finetune.h5')
+    new_model.load_weights('saved_models_10/vgg16ft_1_finetune.h5')
 
     # Compiling Model
     new_model.compile(optimizer=optimizer, loss=loss, metrics=metrics)
@@ -143,9 +154,10 @@ def fine_tune_pipeline():
 
     # Saving Training Progress
 
-    filepath = "saved_models/weightsonly/finetune-weights-in-hdf5/cp-{epoch:04d}-{val_categorical_accuracy:.2f}.hdf5"
+    filepath = "saved_models_20/weightsonly/finetune-weights-in-hdf5/cp-{epoch:04d}-{val_categorical_accuracy:.2f}.hdf5"
     checkpoint = ModelCheckpoint(filepath=filepath, verbose=1, save_best_only=True, monitor='val_categorical_accuracy')
-    callbacks_list = [checkpoint]
+    earlystopping = EarlyStopping(monitor='val_loss', min_delta=0, patience=5, verbose=1, restore_best_weights=True)
+    callbacks_list = [checkpoint, earlystopping]
 
 
     # Defining epochs
@@ -172,8 +184,8 @@ def fine_tune_pipeline():
                                 callbacks=callbacks_list )
 
     # Saving model + weights
-    new_model.save('saved_models/vgg16ft_3_finetune.h5', save_format='h5', overwrite=False)
-    new_model.save_weights('saved_models/weightsonly/vgg16ft_3_finetune.h5', overwrite=False)
+    new_model.save('saved_models_10/vgg16ft_2_finetune.h5', save_format='h5', overwrite=False)
+    new_model.save_weights('saved_models_10/weightsonly/vgg16ft_2_finetune.h5', overwrite=False)
 
     # Summarize history for accuracy
     plot_training_history(history)
@@ -183,13 +195,13 @@ def fine_tune_pipeline():
     print("Test-set classification accuracy: {0:.2%}".format(result[1]))
 
     # Example Errors
-    example_errors(new_model, generator_test, steps_test, cls_test, image_paths_test, class_names)
+    example_errors(new_model, generator_test, steps_test, cls_test, image_paths_test, class_names, batch_size)
 
 
 if __name__ == '__main__':
     # Specifying Directories
-    train_dir = 'D:/Coding Projects/Pycharm Projects/Datasets/animals/train'
-    test_dir = 'D:/Coding Projects/Pycharm Projects/Datasets/animals/test'
+    train_dir = 'D:/Coding Projects/Pycharm Projects/Datasets/animals10/train'
+    test_dir = 'D:/Coding Projects/Pycharm Projects/Datasets/animals10/test'
 
     # Limit VRAM Usage
     gpus = tf.config.experimental.list_physical_devices('GPU')

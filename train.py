@@ -6,6 +6,8 @@ from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.callbacks import ModelCheckpoint
 from sklearn.utils.class_weight import compute_class_weight
+from tensorflow.python.keras.callbacks import EarlyStopping
+
 from helpers import *
 
 
@@ -18,17 +20,21 @@ def transfer_learn_pipeline():
 
     # Creating Generators
     datagen_train = ImageDataGenerator(
-        rescale=1./255,
-        # rotation_range=180,
-        # width_shift_range=0.1,
-        # height_shift_range=0.1,
-        # shear_range=0.1,
+        rescale=1. / 255,
         shear_range=0.2,
         zoom_range=0.2,
         horizontal_flip=True,
-        # zoom_range=[0.9,1.5],
+        # rescale=1./255,
+        # # rotation_range=180,
+        # # width_shift_range=0.1,
+        # # height_shift_range=0.1,
+        # # shear_range=0.1,
+        # shear_range=0.2,
+        # zoom_range=0.2,
         # horizontal_flip=True,
-        # vertical_flip=True,
+        # # zoom_range=[0.9,1.5],
+        # # horizontal_flip=True,
+        # # vertical_flip=True,
         fill_mode='nearest')
 
     datagen_test = ImageDataGenerator(rescale=1./255)
@@ -75,14 +81,15 @@ def transfer_learn_pipeline():
     # Get the number of classes for the dataset.
     num_classes = generator_train.num_classes
 
-    # Load the first images from the train-set.
-    images = load_images(image_paths=image_paths_train[0:9])
+    # # Load the first images from the train-set.
+    # images = load_images(image_paths=image_paths_train[0:9])
+    # print("train: ", image_paths_train)
+    #
+    # # Get the true classes for those images.
+    # cls_true = cls_train[0:9]
 
-    # Get the true classes for those images.
-    cls_true = cls_train[0:9]
 
-
-    # Plot the images and labels using our helper-function above.
+    # # Plot the images and labels using our helper-function above.
     # plot_images(images=images, cls_true=cls_true, cls_names=class_names, smooth=True)
 
     # Adding Class weights to compensate for the data imbalance
@@ -108,7 +115,7 @@ def transfer_learn_pipeline():
     new_model.add(Dense(1024, activation='relu'))
     new_model.add(Dropout(0.5))
     new_model.add(Dense(num_classes, activation='softmax'))
-    optimizer = Adam(lr=1e-5)
+    optimizer = Adam(lr=0.0001)
     loss = 'categorical_crossentropy'
     metrics = ['categorical_accuracy']
 
@@ -123,8 +130,8 @@ def transfer_learn_pipeline():
     # print_layer_trainable(conv_model)
 
 
-    # Model Load Weights
-    new_model.load_weights('saved_models/weightsonly/vgg16ft_1.h5')
+    # # Model Load Weights
+    # new_model.load_weights('saved_models/weightsonly/vgg16ft_1.h5')
 
 
     # Compiling Model
@@ -137,13 +144,13 @@ def transfer_learn_pipeline():
 
     # Saving Training Progress
 
-    filepath = "saved_models/weightsonly/cp-{epoch:04d}-{val_categorical_accuracy:.2f}.hdf5"
+    filepath = "saved_models_10/weightsonly/cp-{epoch:04d}-{val_categorical_accuracy:.2f}.hdf5"
     checkpoint = ModelCheckpoint(filepath=filepath, verbose=1, save_best_only=True, monitor='val_categorical_accuracy')
-    callbacks_list = [checkpoint]
-
+    earlystopping = EarlyStopping(monitor='val_loss', min_delta=0, patience=5, verbose=1, restore_best_weights=True)
+    callbacks_list = [checkpoint, earlystopping]
 
     # Defining epochs
-    epochs = 70
+    epochs = 30
 
 
     # Training
@@ -166,8 +173,8 @@ def transfer_learn_pipeline():
                                 callbacks=callbacks_list )
 
     # Saving model + weights
-    new_model.save('saved_models/vgg16ft_1.h5', save_format='h5', overwrite=False)
-    new_model.save_weights('saved_models/weightsonly/vgg16ft_1.h5', overwrite=False)
+    new_model.save('saved_models_10/vgg16ft_1.h5', save_format='h5', overwrite=False)
+    new_model.save_weights('saved_models_10/weightsonly/vgg16ft_1.h5', overwrite=False)
 
     # Summarize history for accuracy
     plot_training_history(history)
@@ -177,13 +184,13 @@ def transfer_learn_pipeline():
     print("Test-set classification accuracy: {0:.2%}".format(result[1]))
 
     # Example Errors
-    example_errors(new_model, generator_test, steps_test, cls_test, image_paths_test, class_names)
+    example_errors(new_model, generator_test, steps_test, cls_test, image_paths_test, class_names, batch_size)
 
 
 if __name__ == '__main__':
     # Specifying Directories
-    train_dir = 'D:/Coding Projects/Pycharm Projects/Datasets/animals/train'
-    test_dir = 'D:/Coding Projects/Pycharm Projects/Datasets/animals/test'
+    train_dir = 'D:/Coding Projects/Pycharm Projects/Datasets/animals10/train'
+    test_dir = 'D:/Coding Projects/Pycharm Projects/Datasets/animals10/test'
 
     # Limit VRAM Usage
     gpus = tf.config.experimental.list_physical_devices('GPU')

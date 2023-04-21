@@ -42,7 +42,8 @@ def batch_images_plot(d, labels, scaled_yet=False):
 # Helper-function for loading images
 def load_images(image_paths):
     # Load the images from disk.
-    images = [plt.imread(path) for path in image_paths]
+    print(image_paths)
+    images = [ plt.imread(path) for path in image_paths]
 
     # Convert to a numpy array and return it.
     return np.asarray(images)
@@ -76,8 +77,8 @@ def show_labels(pred, labels):
     pred_label = labels[index]
     # print("max(pred)", np.max(pred))
     # print("pred_label: ", pred_label)
-    if np.max(pred) < 0.53:
-        pred_label = 'Not an animal'
+    # if np.max(pred) < 0.53:
+    #     pred_label = 'Not an animal'
     return pred_label
 
 # Helper-function for joining a directory and list of filenames.
@@ -214,13 +215,17 @@ def print_confusion_matrix(cls_pred, cls_test, class_names):
     for i, class_name in enumerate(class_names):
         print("({0}) {1}".format(i, class_name))
 
-def plot_example_errors(cls_pred, cls_test, image_paths_test):
+def plot_example_errors(cls_pred, cls_test, image_paths_test, class_names):
     # cls_pred is an array of the predicted class-number for
     # all images in the test-set.
 
     # Boolean array whether the predicted class is incorrect.
-    incorrect = (cls_pred != cls_test)
+    incorrect = []
+    print("Len of clas predd: ",len(cls_pred))
+    for i in range(0,len(cls_pred)):
+        incorrect.append(cls_pred[i]!=cls_test[i])
 
+    print("INCORRECT: ", incorrect)
     # Get the file-paths for images that were incorrectly classified.
     image_paths = np.array(image_paths_test)[incorrect]
 
@@ -237,9 +242,9 @@ def plot_example_errors(cls_pred, cls_test, image_paths_test):
     # We have only loaded 9 images so there is no need to slice those again.
     plot_images(images=images,
                 cls_true=cls_true[0:9],
-                cls_pred=cls_pred[0:9])
+                cls_pred=cls_pred[0:9], cls_names=class_names)
 
-def example_errors(model, test_image_generator, test_steps_per_epoch, cls_test, image_paths_test, class_names):
+def example_errors(model, test_image_generator, test_steps_per_epoch, cls_test, image_paths_test, class_names, batch_size):
     # The Keras data-generator for the test-set must be reset
     # before processing. This is because the generator will loop
     # infinitely and keep an internal index into the dataset.
@@ -255,10 +260,16 @@ def example_errors(model, test_image_generator, test_steps_per_epoch, cls_test, 
 
     # Convert the predicted classes from arrays to integers.
     cls_pred = np.argmax(y_pred, axis=1)
+    print("CLS PRED: ", cls_pred)
+    print("CLS test: ", cls_test)
 
     # Plot examples of mis-classified images.
-    plot_example_errors(cls_pred, cls_test, image_paths_test)
+
+    print("test_steps_per_epoch: ", test_steps_per_epoch)
+    range=test_steps_per_epoch*batch_size
+    print("range: ", range)
+    plot_example_errors(cls_pred[0:range], cls_test[0:range], image_paths_test[0:range], class_names)
 
     # Print the confusion matrix.
-    print_confusion_matrix(cls_pred, cls_test, class_names)
+    print_confusion_matrix(cls_pred[0:test_steps_per_epoch*batch_size], cls_test[0:test_steps_per_epoch*batch_size], class_names)
 

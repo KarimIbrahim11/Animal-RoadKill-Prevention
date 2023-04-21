@@ -8,13 +8,13 @@ from helpers import load_labels, load_image, preprocess_image, show_labels
 @st.cache_resource
 def getModel():
     # This function will only be run the first time it's called
-    loaded_model = load_model('saved_models/vgg16ft_2_finetune.h5')
+    loaded_model = load_model('saved_models_10/vgg16ft_2_finetune.h5')
     print("************** Model Loaded **************")
     return loaded_model
 
 @st.cache_data
 def getLabels():
-    loaded_labels = load_labels('labels.txt')
+    loaded_labels = load_labels('labels_3.txt')
     loaded_labels.sort()
     print("************** Labels Loaded **************")
     return loaded_labels
@@ -27,7 +27,7 @@ if __name__ == '__main__':
     labels = getLabels()
 
     st.title("Animal-RoadKill-Prevention Task")
-    st.caption("A 47 class animal classifier for Elevate AI by Karim Ibrahim")
+    st.caption("A 25 class animal classifier for Elevate AI by Karim Ibrahim")
 
     st.subheader("Image Uploader:")
     uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])

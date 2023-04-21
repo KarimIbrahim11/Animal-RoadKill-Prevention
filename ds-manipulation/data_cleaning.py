@@ -3,7 +3,7 @@ import imghdr
 import os
 
 # Data dir
-data_dir = 'D:/Coding Projects/Pycharm Projects/Datasets/animals'
+data_dir = 'D:/Coding Projects/Pycharm Projects/Datasets/animals/'
 
 # Reading Labels from text file
 labels_pth = 'name of the animals.txt'
