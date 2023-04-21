@@ -76,8 +76,8 @@ def show_labels(pred, labels):
     pred_label = labels[index]
     # print("max(pred)", np.max(pred))
     # print("pred_label: ", pred_label)
-    if np.max(pred) < 0.53:
-        pred_label = 'Not an animal'
+    #     if np.max(pred) < 0.53:
+    #         pred_label = 'Not an animal'
     return pred_label
 
 # Helper-function for joining a directory and list of filenames.
