@@ -11,6 +11,11 @@ The project uses deep learning techniques for image classification. The model ar
 
 ## Results
 The model achieves an accuracy of 82% on the testing set.
+### - Sample Result 1
+![results_1](https://user-images.githubusercontent.com/47744559/235335251-3cce6b50-2df2-489a-a130-4d6e28a76771.jpg)
+### - Sample Result 2
+![results_2](https://user-images.githubusercontent.com/47744559/235335255-e12a9471-2b6e-4ae7-a6c3-a18883ac0091.jpg)
+
 
 
 ## Project Structure
@@ -33,5 +38,27 @@ The model achieves an accuracy of 82% on the testing set.
 - train.py          the script used in Transfer-Learning
 - fine_tune.py      the script used for fine-tuning 
 - streamlit_app.py  the script used for the streamlit web ui service
-- inference.py      the script used for local inference
+- inference.py      the script used for local inference (without streamlit_app)
 - helpers.py        the script used for providing helper functions to all of the aforementioned scripts
+
+
+## Instructions to Use Repo and Pre-train your Model on a local Dataset
+
+- Collect/ Download your DS .
+- Use ds-manipulation/custom_dataset_meta.py script to generate labels.txt, train.txt, test.txt files which will then be used by the split_dataset.py .
+- Use ds-manipulation/split_dataset.py to split the dataset to test and train in a directory structure that follows tf.Dataset standards .
+- (optional) Use ds-manipulation/data_cleaning.py for cleaning the small files (default is < 9KB) feel free to add your own techniques or change the already existing ones .
+- Depending on the size of your Dataset and the similarity of the original trained on task decide whether to transfer learn or fine-tune or both based on the      following table: 
+
+![hackernoon](https://user-images.githubusercontent.com/47744559/235335453-44381f50-f319-4bca-88f2-3a7938aa2501.jpg)
+** Image courtesy of Hackernoon : https://hackernoon.com/transfer-learning-approaches-and-empirical-observations-efeff9dfeca6
+
+- Now, use the train.py to transfer-learn your model to the new problem. I transfer learned using a Scheduler and Early Stopping techinque for 5 epochs on the val_loss metric. The script automatically saves best the best model only in the saved_models/dir. 
+- Use fine_tune.py for fine_tuning your saved model (make sure to change the directory of the load_model function to the saved model in saved_models/ dir). Recommended training on a mid size dataset (100K images) is 70 epochs. 
+- Scroll the helpers.py function for useful visualization and Classification Report, Confusion Matrix Functions
+- Use inference.py to use the saved model on test_images (perhaps in the test_images/ dir)
+- If you wish to use streamlit_app.py to deploying your model on web. First, Upload your repo to github (It has to be public). Create an account on Streamlit and connect it to your Github. Create an app on streamlit and link it to the Repo/branch and streamlit_app.py file. 
+- Note: Use the decorator with the getModel() in the streamlit_app.py to prevent the model from loading every time you upload an image.
+
+
+
